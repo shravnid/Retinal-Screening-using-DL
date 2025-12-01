@@ -13,8 +13,8 @@ app = Flask(__name__)
 # ============================================================
 # Auto-detect environment
 if os.environ.get('RENDER'):
-    MODEL_PATH = 'efficientnet_b0_final.h5'
-    LABELS_PATH = 'classes.json'
+    MODEL_PATH = 'efficientnet_b0_final_v2.h5'
+    LABELS_PATH = 'classes_v2.json'
 else:
     MODEL_PATH = r'C:\Users\shrav\OneDrive\Desktop\major-project\model\efficientnet_b0_final.h5'
     LABELS_PATH = r'C:\Users\shrav\OneDrive\Desktop\major-project\model\classes.json'
