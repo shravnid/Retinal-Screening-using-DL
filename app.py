@@ -11,8 +11,9 @@ app = Flask(__name__)
 #                    CONFIGURATION
 # ============================================================
 # UPDATE THESE PATHS TO YOUR ACTUAL FILES
-MODEL_PATH = r'C:\Users\shrav\OneDrive\Desktop\major-project\model\efficientnet_b0_final.h5'
-LABELS_PATH = r'C:\Users\shrav\OneDrive\Desktop\major-project\model\classes.json'
+MODEL_PATH = 'efficientnet_b0_final_v2.h5'
+LABELS_PATH = 'classes_v2.json'
+
 
 # Disease information database
 DISEASE_INFO = {
