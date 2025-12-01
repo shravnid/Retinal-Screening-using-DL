@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetinaScan AI - Retinal Disease Detection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        /* Stats Section */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px 40px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 800;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        /* Main Content */
+        .content {
+            padding: 40px;
+        }
+
+        /* Upload Section */
+        .upload-section {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 50px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+
+        .upload-section:hover {
+            background: linear-gradient(135deg, #e8eef5 0%, #dce4f0 100%);
+            border-color: #764ba2;
+            transform: translateY(-2px);
+        }
+
+        .upload-section.dragover {
+            background: #e8eef5;
+            border-color: #764ba2;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* Image Preview */
+        .preview-container {
+            text-align: center;
+            margin: 30px 0;
+            display: none;
+        }
+
+        #preview {
+            max-width: 500px;
+            max-height: 400px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        /* Action Button */
+        .analyze-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 18px 50px;
+            border-radius: 30px;
+            font-size: 1.1em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            display: block;
+            margin: 30px auto;
+        }
+
+        .analyze-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #666;
+            font-size: 1.1em;
+            margin-top: 15px;
+        }
+
+        /* Results Section */
+        .results-section {
+            display: none;
+            margin-top: 40px;
+        }
+
+        .section-title {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        /* Alert Box */
+        .alert-box {
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 5px solid;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border-color: #17a2b8;
+            color: #0c5460;
+        }
+
+        .alert-box h3 {
+            font-size: 1.4em;
+            margin-bottom: 10px;
+        }
+
+        .alert-box p {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        /* Disease Cards */
+        .disease-cards {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .disease-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .disease-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+            transition: width 0.3s ease;
+        }
+
+        .disease-card.low::before { background: #28a745; }
+        .disease-card.medium::before { background: #ffc107; }
+        .disease-card.high::before { background: #dc3545; }
+
+        .disease-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .disease-card:hover::before {
+            width: 8px;
+        }
+
+        .disease-info-left {
+            flex: 1;
+        }
+
+        .disease-name {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .disease-description {
+            color: #666;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        .disease-info-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .percentage {
+            font-size: 2em;
+            font-weight: 800;
+            color: #333;
+        }
+
+        .badge {
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+            color: white;
+        }
+
+        .badge.low { background: #28a745; }
+        .badge.medium { background: #ffc107; }
+        .badge.high { background: #dc3545; }
+
+        /* Recommendations */
+        .recommendation-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .recommendation-box h3 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+        }
+
+        .recommendation-item {
+            background: rgba(255,255,255,0.15);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid white;
+        }
+
+        .recommendation-item strong {
+            display: block;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .recommendation-item ul {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+
+        /* Disclaimer */
+        .disclaimer {
+            background: #fff3cd;
+            border: 3px solid #ffc107;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 30px;
+            color: #856404;
+        }
+
+        .disclaimer h3 {
+            color: #dc3545;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .disclaimer strong {
+            color: #dc3545;
+        }
+
+        .disclaimer ul {
+            margin: 15px 0 15px 25px;
+            line-height: 1.8;
+        }
+
+        /* Instructions */
+        .instructions {
+            background: #e8f4f8;
+            border-left: 5px solid #17a2b8;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+
+        .instructions h3 {
+            color: #0c5460;
+            margin-bottom: 15px;
+        }
+
+        .instructions ul {
+            margin-left: 25px;
+            line-height: 1.8;
+            color: #0c5460;
+        }
+
+        /* Footer */
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .footer p {
+            margin: 8px 0;
+            opacity: 0.9;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .disease-card {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+
+            .disease-info-right {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>👁️ RetinaScan AI</h1>
+            <p>Advanced Retinal Disease Detection powered by Deep Learning</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">8</div>
+                <div class="stat-label">Conditions Detected</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">AI</div>
+                <div class="stat-label">EfficientNet Model</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">&lt;3s</div>
+                <div class="stat-label">Analysis Time</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <!-- Upload Section -->
+            <div class="upload-section" id="uploadArea">
+                <div class="upload-icon">📸</div>
+                <div class="upload-text">Upload Your Retinal Fundus Image</div>
+                <div class="upload-hint">Drag and drop or click to browse • Supports JPG, PNG, JPEG</div>
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+
+            <!-- Preview -->
+            <div class="preview-container" id="previewContainer">
+                <img id="preview" alt="Uploaded Image">
+            </div>
+
+            <!-- Analyze Button -->
+            <button class="analyze-btn" id="analyzeBtn" disabled>🔍 Analyze Image</button>
+
+            <!-- Loading -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <div class="loading-text">Analyzing retinal structures...</div>
+            </div>
+
+            <!-- Results -->
+            <div class="results-section" id="results"></div>
+
+            <!-- Instructions (shown initially) -->
+            <div class="instructions" id="instructions">
+                <h3>📝 How to Use RetinaScan AI</h3>
+                <ul>
+                    <li><strong>Step 1:</strong> Upload a clear fundus (retinal) photograph using the upload area above</li>
+                    <li><strong>Step 2:</strong> Click "Analyze Image" and wait 2-3 seconds for AI analysis</li>
+                    <li><strong>Step 3:</strong> Review the detailed results and recommendations</li>
+                    <li><strong>Step 4:</strong> Consult with your eye care provider with the results</li>
+                </ul>
+                <br>
+                <strong>Image Requirements:</strong>
+                <ul>
+                    <li>Clear, well-lit fundus photograph</li>
+                    <li>Centered on optic disc and macula</li>
+                    <li>Minimal reflections or obstructions</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>🔬 Powered by EfficientNetB0 Deep Learning Architecture</p>
+            <p>For research and educational purposes • Not FDA approved</p>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+        const previewContainer = document.getElementById('previewContainer');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const instructions = document.getElementById('instructions');
+
+        let selectedFile = null;
+
+        // Upload area click
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleFile(file);
+            }
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
+        });
+
+        function handleFile(file) {
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.src = e.target.result;
+                previewContainer.style.display = 'block';
+                analyzeBtn.disabled = false;
+                results.style.display = 'none';
+                instructions.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Analyze button
+        analyzeBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            analyzeBtn.disabled = true;
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    displayResults(data);
+                } else {
+                    alert('Error: ' + (data.error || 'Analysis failed'));
+                }
+            } catch (error) {
+                alert('Network error: ' + error.message);
+            } finally {
+                loading.style.display = 'none';
+                analyzeBtn.disabled = false;
+            }
+        });
+
+        function displayResults(data) {
+            const primary = data.primary_diagnosis;
+            const allResults = data.all_results;
+
+            let alertClass = 'alert-info';
+            let alertIcon = 'ℹ️';
+            let alertTitle = 'Analysis Complete';
+            let alertMessage = '';
+
+            if (primary.class_key === 'normal') {
+                alertClass = 'alert-success';
+                alertIcon = '✅';
+                alertTitle = 'Good News!';
+                alertMessage = `Your retinal scan shows <strong>no significant abnormalities</strong>. Your eyes appear healthy!`;
+            } else if (primary.risk_level === 'high') {
+                alertClass = 'alert-warning';
+                alertIcon = '⚠️';
+                alertTitle = 'Attention Required';
+                alertMessage = `Our AI has detected signs of <strong>${primary.name}</strong> with high confidence.`;
+            } else {
+                alertMessage = `Possible signs of <strong>${primary.name}</strong> detected.`;
+            }
+
+            let html = `
+                <h2 class="section-title">📋 Diagnostic Results</h2>
+                
+                <div class="alert-box ${alertClass}">
+                    <h3>${alertIcon} ${alertTitle}</h3>
+                    <p>${alertMessage}</p>
+                    <p><strong>Confidence:</strong> ${primary.percentage}%</p>
+                </div>
+
+                <div class="disease-cards">
+            `;
+
+            allResults.forEach(disease => {
+                html += `
+                    <div class="disease-card ${disease.risk_level}">
+                        <div class="disease-info-left">
+                            <div class="disease-name">${disease.name}</div>
+                            <div class="disease-description">${disease.description}</div>
+                        </div>
+                        <div class="disease-info-right">
+                            <span class="percentage">${disease.percentage}%</span>
+                            <span class="badge ${disease.risk_level}">
+                                ${disease.risk_level === 'low' ? 'Low Risk' : disease.risk_level === 'medium' ? 'Moderate' : 'High Risk'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                </div>
+
+                <div class="recommendation-box">
+                    <h3>🏥 Recommended Next Steps</h3>
+                    <div class="recommendation-item">
+                        <strong>Primary Action:</strong>
+                        ${primary.action}
+                    </div>
+                    <div class="recommendation-item">
+                        <strong>General Advice:</strong>
+                        <ul>
+                            <li>Save this report and share it with your eye care provider</li>
+                            <li>Schedule an appointment within 1-2 weeks (sooner if symptoms worsen)</li>
+                            <li>Bring any previous eye exam records</li>
+                            <li>Note any vision changes or symptoms you've experienced</li>
+                        </ul>
+                    </div>
+                    <div class="recommendation-item">
+                        <strong>Lifestyle Recommendations:</strong>
+                        <ul>
+                            <li>Maintain healthy blood pressure and blood sugar levels</li>
+                            <li>Eat a diet rich in leafy greens, fish, and colorful vegetables</li>
+                            <li>Protect eyes from UV rays with sunglasses</li>
+                            <li>Take regular breaks from screens (20-20-20 rule)</li>
+                            <li>Avoid smoking and limit alcohol consumption</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="disclaimer">
+                    <h3>⚠️ Important Medical Disclaimer</h3>
+                    <p><strong>This is NOT a medical diagnosis.</strong></p>
+                    <p>RetinaScan AI is an artificial intelligence screening tool designed to assist in identifying potential retinal conditions. 
+                    It should <strong>NEVER</strong> replace professional medical examination, diagnosis, or treatment by a qualified ophthalmologist or optometrist.</p>
+                    <strong>You must:</strong>
+                    <ul>
+                        <li>Consult a licensed eye care professional for proper diagnosis</li>
+                        <li>Seek immediate medical attention if experiencing vision changes or eye pain</li>
+                        <li>Not make treatment decisions based solely on this AI screening</li>
+                        <li>Understand that AI can make errors - human expert evaluation is essential</li>
+                    </ul>
+                </div>
+            `;
+
+            results.innerHTML = html;
+            results.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
